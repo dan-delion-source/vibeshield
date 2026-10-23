@@ -1,0 +1,10 @@
+# Generated artifacts for this VibeShield project
+.venv/
+node_modules/
+__pycache__/
+*.pyc
+.vibeshield/
+dashboard/web/dist/
+dashboard/web/test-results/
+dashboard/web/playwright-report/
+.impeccable/review/

@@ -1,0 +1,16 @@
+id: vibeshield-missing-nosniff
+info:
+  name: Missing X-Content-Type-Options nosniff header (hardening review)
+  author: vibeshield
+  severity: info
+  description: A deterministic header check; absence alone is not proof of an exploitable vulnerability.
+  tags: headers,local,hardening
+http:
+  - method: GET
+    path:
+      - "{{BaseURL}}"
+    redirects: false
+    matchers:
+      - type: dsl
+        dsl:
+          - "!contains(tolower(header), 'x-content-type-options: nosniff')"

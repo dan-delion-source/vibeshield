@@ -1,0 +1,9 @@
+rules:
+  - id: vibeshield.flask-debug-enabled
+    languages: [python]
+    severity: WARNING
+    message: Flask debug mode is enabled; review whether this can reach a deployed environment.
+    pattern: $APP.run(..., debug=True, ...)
+    metadata:
+      cwe: CWE-489
+      confidence: MEDIUM

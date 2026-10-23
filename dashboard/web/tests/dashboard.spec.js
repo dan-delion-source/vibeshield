@@ -1,0 +1,35 @@
+import {test,expect} from '@playwright/test';
+import AxeBuilder from '@axe-core/playwright';
+test('local fixture workflow and responsive interface',async({page})=>{
+ test.setTimeout(180000);
+ await page.goto('http://127.0.0.1:8787');
+ await page.setViewportSize({width:1440,height:1000});
+ await expect(page.getByRole('heading',{name:'Start a new scan'})).toBeVisible();
+ await page.screenshot({path:'../../.impeccable/review/desktop.png',fullPage:true});
+ await page.getByRole('button',{name:'Use test fixture'}).click();
+ await page.getByLabel('I own this target').check();
+ await page.getByRole('button',{name:'Start scan',exact:true}).click();
+ await expect(page.getByText('Scan queued.',{exact:false})).toBeVisible();
+ await page.getByRole('button',{name:'Findings',exact:true}).click();
+ await expect(page.getByRole('button',{name:'Potential missing ownership check',exact:true})).toBeVisible({timeout:140000});
+ await page.getByRole('button',{name:'Potential missing ownership check',exact:true}).click();
+ await expect(page.getByRole('dialog')).toContainText('IDOR-AST-01');
+ await page.keyboard.press('Escape');
+ await expect(page.getByRole('dialog')).not.toBeVisible();
+ await page.screenshot({path:'../../.impeccable/review/findings.png',fullPage:true});
+ const download=page.waitForEvent('download');
+ await page.getByRole('button',{name:/Download PDF report/}).click();
+ await (await download).saveAs('../../.impeccable/review/fixture-report.pdf');
+ const audit=await new AxeBuilder({page}).analyze();
+ expect(audit.violations.map(v=>({id:v.id,nodes:v.nodes.map(n=>n.target)}))).toEqual([]);
+ await page.getByRole('button',{name:'Overview',exact:true}).click();
+ await page.setViewportSize({width:390,height:844});
+ await page.getByRole('button',{name:'Dismiss notification'}).click().catch(()=>{});
+ await page.screenshot({path:'../../.impeccable/review/mobile.png',fullPage:true});
+ expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBeTruthy();
+ for(const width of [320,390,768]){await page.setViewportSize({width,height:844});expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBeTruthy();}
+ await page.setViewportSize({width:390,height:844});
+ await page.getByRole('button',{name:'Open navigation'}).click();
+ await page.getByRole('button',{name:'Reports',exact:true}).click();
+ await expect(page.getByRole('heading',{name:'Assessment reports'})).toBeVisible();
+});

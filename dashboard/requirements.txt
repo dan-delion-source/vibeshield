@@ -1,0 +1,2 @@
+# PDF rendering only. The scanner itself remains standard-library Python.
+reportlab==5.0.1

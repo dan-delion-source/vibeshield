@@ -1,0 +1,166 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-06T06:30:47.767060+00:00",
+  "title": "Design System: VibeShield",
+  "extensions": {
+    "colorMeta": {
+      "accent": {
+        "role": "primary",
+        "displayName": "Terracotta"
+      },
+      "paper": {
+        "role": "neutral",
+        "displayName": "Paper"
+      },
+      "canvas": {
+        "role": "neutral",
+        "displayName": "Pale canvas"
+      },
+      "rail": {
+        "role": "neutral",
+        "displayName": "Ink green"
+      },
+      "secondary-text": {
+        "role": "neutral",
+        "displayName": "Evidence sage",
+        "purpose": "Darker secondary labels, evidence metadata, and placeholders."
+      }
+    },
+    "typographyMeta": {
+      "headline": {
+        "displayName": "Page headline",
+        "purpose": "Primary page heading."
+      },
+      "evidence": {
+        "displayName": "Evidence",
+        "purpose": "Source excerpts and rule references."
+      }
+    },
+    "shadows": [
+      {
+        "name": "inspection-pane",
+        "value": "-16px 0 50px #1025181f",
+        "purpose": "Foreground evidence drawer."
+      },
+      {
+        "name": "toast",
+        "value": "0 8px 32px #1732202b",
+        "purpose": "Transient bottom notification."
+      },
+      {
+        "name": "target-focus",
+        "value": "0 0 0 3px #a86b5012",
+        "purpose": "Target input focus within."
+      }
+    ],
+    "motion": [
+      {
+        "name": "button-transition",
+        "value": "background .17s ease,color .17s ease,box-shadow .17s ease",
+        "purpose": "Control state changes."
+      },
+      {
+        "name": "scan-spinner",
+        "value": "spin 1.4s linear infinite",
+        "purpose": "Actual running state; suppressed for reduced motion."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "wide-min",
+        "value": "1500px"
+      },
+      {
+        "name": "compact-max",
+        "value": "1180px"
+      },
+      {
+        "name": "single-column-max",
+        "value": "980px"
+      },
+      {
+        "name": "mobile-max",
+        "value": "760px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Submit a scan or begin the primary task.",
+      "html": "<button class=\"ds-primary\">Start scan</button>",
+      "css": ".ds-primary{font-family:'Manrope Variable',sans-serif;display:inline-flex;align-items:center;justify-content:center;gap:9px;font-weight:650;font-size:11px;border:1px solid transparent;min-height:41px;padding:0 16px;border-radius:7px;cursor:pointer;transition:background .17s ease,color .17s ease,box-shadow .17s ease;background:var(--accent,#a64228);color:#fff}.ds-primary:hover:not(:disabled){background:var(--accent-hover,#87351f)}.ds-primary:focus-visible{outline:3px solid #be6c4e;outline-offset:4px}.ds-primary:disabled{opacity:.5;cursor:not-allowed}@media(prefers-reduced-motion:reduce){.ds-primary,.ds-secondary,.ds-target-row,.ds-nav{transition:none!important;animation:none!important}}"
+    },
+    {
+      "name": "Secondary button",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "Download or refresh supporting data.",
+      "html": "<button class=\"ds-secondary\">Check again</button>",
+      "css": ".ds-secondary{font-family:'Manrope Variable',sans-serif;display:inline-flex;align-items:center;justify-content:center;gap:9px;font-weight:650;font-size:11px;border:1px solid transparent;min-height:41px;padding:0 16px;border-radius:7px;cursor:pointer;transition:background .17s ease,color .17s ease,box-shadow .17s ease;background:#fff;border-color:#dce2d8;color:#41513f}.ds-secondary:hover:not(:disabled){background:#f3f5ee;border-color:#bdc8b7}.ds-secondary:focus-visible{outline:3px solid #be6c4e;outline-offset:4px}.ds-secondary:disabled{opacity:.5;cursor:not-allowed}@media(prefers-reduced-motion:reduce){.ds-primary,.ds-secondary,.ds-target-row,.ds-nav{transition:none!important;animation:none!important}}"
+    },
+    {
+      "name": "Target input",
+      "kind": "input",
+      "refersTo": "target-input",
+      "description": "A labeled target field with shared container focus.",
+      "html": "<label class=\"ds-label\" for=\"ds-target\">Website URL or IP address</label><div class=\"ds-target-row\"><input id=\"ds-target\" class=\"ds-target\" placeholder=\"http://localhost:5000/api/health\"></div>",
+      "css": ".ds-label{font-family:'Manrope Variable',sans-serif;display:block;font-size:12px;font-weight:650;margin-bottom:10px;color:var(--ink,#26362e)}.ds-target-row{display:flex;align-items:center;gap:11px;padding:5px 6px 5px 13px;border:1px solid #d4ddcf;border-radius:9px;background:#fff;transition:box-shadow .18s}.ds-target-row:focus-within{border-color:#a86b50;box-shadow:0 0 0 3px #a86b5012}.ds-target{font-family:'Manrope Variable',sans-serif;min-width:0;width:100%;font-size:12px;border:0;background:none;padding:10px 0;outline:none;color:#243c29;caret-color:var(--accent,#a64228)}.ds-target::placeholder{color:#596951;opacity:1}@media(prefers-reduced-motion:reduce){.ds-primary,.ds-secondary,.ds-target-row,.ds-nav{transition:none!important;animation:none!important}}"
+    },
+    {
+      "name": "Active navigation",
+      "kind": "nav",
+      "refersTo": "navigation-active",
+      "description": "Current destination within the dark navigation rail.",
+      "html": "<nav class=\"ds-rail\" aria-label=\"Preview\"><button class=\"ds-nav\" aria-current=\"page\">Overview</button></nav>",
+      "css": ".ds-rail{background:var(--rail,#172b24);padding:18px}.ds-nav{font-family:'Manrope Variable',sans-serif;border:0;background:#e6eedf;color:#1d3328;border-radius:8px;padding:12px 14px;display:flex;gap:13px;text-align:left;font-size:12px;font-weight:750;width:100%;cursor:pointer;transition:background .17s ease,color .17s ease,box-shadow .17s ease}.ds-nav:hover{background:#e6eedf;color:#1d3328}.ds-nav:focus-visible{outline:3px solid #be6c4e;outline-offset:4px}@media(prefers-reduced-motion:reduce){.ds-primary,.ds-secondary,.ds-target-row,.ds-nav{transition:none!important;animation:none!important}}"
+    },
+    {
+      "name": "Completed status",
+      "kind": "chip",
+      "refersTo": "status-completed",
+      "description": "A static scan state, with icon and text.",
+      "html": "<span class=\"ds-state\"><svg width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\" aria-hidden=\"true\"><circle cx=\"12\" cy=\"12\" r=\"9\"/><path d=\"m8 12 3 3 5-6\"/></svg>Completed</span>",
+      "css": ".ds-state{font-family:'Manrope Variable',sans-serif;display:inline-flex;align-items:center;gap:5px;font-size:9px;font-weight:600;white-space:nowrap;border-radius:4px;padding:4px 6px;color:#3a703e;background:#edf6e9}@media(prefers-reduced-motion:reduce){.ds-primary,.ds-secondary,.ds-target-row,.ds-nav{transition:none!important;animation:none!important}}"
+    },
+    {
+      "name": "Paper panel",
+      "kind": "card",
+      "refersTo": "panel",
+      "description": "Flat, bordered working content with a panel heading.",
+      "html": "<section class=\"ds-panel\"><h2 class=\"ds-title\">Scanner readiness</h2></section>",
+      "css": ".ds-panel{font-family:'Manrope Variable',sans-serif;background:#fff;border:1px solid var(--line,#e5e9e2);border-radius:var(--radius,14px);padding:26px;color:var(--ink,#26362e)}.ds-title{margin:0;font-size:16px;font-weight:700;letter-spacing:-.02em}@media(prefers-reduced-motion:reduce){.ds-primary,.ds-secondary,.ds-target-row,.ds-nav{transition:none!important;animation:none!important}}"
+    },
+    {
+      "name": "Evidence block",
+      "kind": "custom",
+      "refersTo": "evidence-block",
+      "description": "Wrapped source or rule reference within inspection details.",
+      "html": "<code class=\"ds-evidence\">fixtures/idor-notes-app/app.py</code>",
+      "css": ".ds-evidence{display:block;padding:13px;background:#f4f6ef;font-family:monospace;font-size:10px;line-height:1.8;border-radius:7px;white-space:pre-wrap;overflow-wrap:anywhere;color:#5a6f50}@media(prefers-reduced-motion:reduce){.ds-primary,.ds-secondary,.ds-target-row,.ds-nav{transition:none!important;animation:none!important}}"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Research Desk",
+    "overview": "A quiet research desk with paper surfaces, an ink-green navigation rail, and terracotta actions. Dense evidence tables use precise rules and restrained type so targets, findings, and coverage remain easy to compare.\n\nThis documents the implemented visual system in dashboard/web/src/style.css and main.jsx. The metaphor and descriptive color names are implementation assumptions, not user-confirmed brand preferences.",
+    "keyCharacteristics": [
+      "Paper surfaces with fine structural rules.",
+      "One warm action accent against subdued green neutrals.",
+      "Compact labels, explicit status text, and inspectable evidence."
+    ],
+    "rules": [],
+    "dos": [
+      "Do reuse paper panels, ink text, and terracotta primary actions.",
+      "Do pair status and severity colors with readable labels.",
+      "Do preserve visible keyboard focus and reduced-motion behavior.",
+      "Do let evidence tables scroll within their container on narrow screens."
+    ],
+    "donts": [
+      "Don't imply that a candidate is a confirmed exploit.",
+      "Don't use invented counts or simulated scanner progress as decoration.",
+      "Don't introduce a second display font or decorative card shadows into the current system."
+    ]
+  }
+}
