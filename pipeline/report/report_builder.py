@@ -44,6 +44,8 @@ def report_data(scan):
         'authorization': scan.get('authorization', {}), 'repository_commit': scan.get('repository_commit'),
         'summary': {'candidate_count': len(findings), 'by_severity': dict(Counter(item['display_severity'] for item in findings))},
         'stages': scan['stages'], 'errors': scan['errors'], 'findings': findings,
+        'semgrep_profile': scan.get('semgrep_profile', 'broad'),
+        'scope_notes': scan.get('scope_notes', []),
         'limitations': [
             'All findings are candidates. No exploit verification, numeric risk score, or LLM analysis was performed.',
             'Tool severity and evidence confidence are different. AST IDOR candidates have no assigned severity.',
@@ -79,6 +81,8 @@ def pdf_report(scan):
     if data['repository_commit']:
         story.append(p('Repository commit: ' + data['repository_commit'], 'SmallV'))
     story.append(p('Scan coverage', 'Heading2'))
+    for note in data['scope_notes']:
+        story.append(p(note))
     rows = [[p('Tool'), p('Result'), p('Findings')]]
     for stage in data['stages']:
         rows.append([p(stage['name']), p(stage['status']), p(stage.get('finding_count', '—'))])

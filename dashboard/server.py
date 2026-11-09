@@ -23,9 +23,10 @@ import uuid
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 from pipeline.scan import ast_heuristic_analyzer, nuclei_runner, secrets_runner, semgrep_runner, zap_runner
-from pipeline.scan.common import ScanError, local_url, repo_directory, run_command, tool_environment
+from pipeline.scan.common import ScanError, ScanCoverageError, local_url, repo_directory, run_command, tool_environment
 from pipeline.scan.run_scan import consolidate
 from pipeline.report.report_builder import json_report, pdf_report
+from dashboard.folder_picker import pick_directory
 
 TOOLS = [('semgrep', 'Semgrep', semgrep_runner.scan), ('ast', 'Python AST', ast_heuristic_analyzer.scan),
          ('gitleaks', 'Gitleaks', secrets_runner.scan), ('nuclei', 'Nuclei', nuclei_runner.scan), ('zap', 'OWASP ZAP', zap_runner.scan)]
@@ -117,13 +118,21 @@ class ScanStore:
             raise ScanError('Confirm that you own the target or have permission to test it.')
         kind = body.get('target_type')
         target = validate_target(kind, body.get('target'))
+        semgrep_profile = body.get('semgrep_profile', 'broad')
+        if not isinstance(semgrep_profile,str) or semgrep_profile not in semgrep_runner.PROFILES:
+            raise ScanError('Choose a supported Semgrep scope: broad or python.')
+        if kind == 'website': semgrep_profile = 'broad'
         selected = TOOLS[3:] if kind == 'website' else TOOLS[:3]
         stages = [{'id':key,'name':name,'status':'queued','finding_count':0} for key,name,_ in selected]
+        if semgrep_profile == 'python':
+            next(stage for stage in stages if stage['id']=='semgrep')['name'] = 'Semgrep (Python only)'
         if kind == 'github': stages.insert(0, {'id':'checkout','name':'GitHub checkout','status':'queued','finding_count':0})
         job = {'id':uuid.uuid4().hex[:12], 'target':target, 'target_type':kind,
                'status':'queued', 'created_at':now(), 'started_at':None, 'finished_at':None,
                'authorization':{'confirmed':True,'confirmed_at':now(),'scope':'local website or authorized static repository'},
-               'stages':stages,'findings':[],'errors':[], 'repository_commit':None}
+               'stages':stages,'findings':[],'errors':[], 'repository_commit':None,
+               'semgrep_profile':semgrep_profile,
+               'scope_notes':[semgrep_runner.PYTHON_SCOPE] if semgrep_profile=='python' else []}
         with self.lock:
             if sum(j['status'] not in TERMINAL for j in self.jobs.values()) >= 5:
                 raise ScanError('Five scans are already queued or running. Wait for one to finish.')
@@ -165,7 +174,10 @@ class ScanStore:
                 try:
                     diagnostic = None
                     try:
-                        raw = runner(target, timeout=300)
+                        if key == 'semgrep' and job.get('semgrep_profile') == 'python':
+                            raw = runner(target, timeout=300, profile='python')
+                        else:
+                            raw = runner(target, timeout=300)
                     except ScanError as exc:
                         raw = exc.findings
                         diagnostic = exc
@@ -184,10 +196,10 @@ class ScanStore:
                         raise diagnostic
                 except (ScanError, OSError) as exc:
                     message = str(exc)
-                    self.stage(job_id,key,status='failed',error=message,finished_at=now())
+                    self.stage(job_id,key,status='partial' if isinstance(exc,ScanCoverageError) else 'failed',error=message,finished_at=now())
                     self.change(job_id,lambda j:j['errors'].append({'source_tool':key,'error':message}))
             current = self.get(job_id)
-            completed = [s for s in current['stages'] if s['status']=='completed' and s['id']!='checkout']
+            completed = [s for s in current['stages'] if s['status'] in {'completed','partial'} and s['id']!='checkout']
             status = 'completed' if not current['errors'] else 'partial' if completed else 'failed'
             self.change(job_id,lambda j:j.update(status=status,finished_at=now()))
         except Exception as exc:
@@ -271,12 +283,14 @@ class Handler(BaseHTTPRequestHandler):
     def do_POST(self):
         if not self.trusted() or not secrets.compare_digest(self.headers.get('X-VibeShield-Token',''),self.server.csrf):
             return self.send(403,{'error':'Session verification failed. Refresh the page and try again.'})
-        if self.path != '/api/scans': return self.send(404,{'error':'API route not found.'})
+        if self.path not in {'/api/scans', '/api/pick-directory'}: return self.send(404,{'error':'API route not found.'})
         try:
             length = int(self.headers.get('Content-Length','0'))
             if length < 1 or length > 8192: return self.send(413,{'error':'Request must contain a small JSON scan target.'})
             body = json.loads(self.rfile.read(length))
             if not isinstance(body,dict): raise ValueError()
+            if self.path == '/api/pick-directory':
+                return self.send(200, {'path': pick_directory(body.get('initial', ''))})
             return self.send(202,self.server.store.create(body))
         except (ValueError, UnicodeError): return self.send(400,{'error':'Invalid JSON request.'})
         except ScanError as exc: return self.send(400,{'error':str(exc)})

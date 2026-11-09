@@ -6,12 +6,16 @@ from pathlib import Path
 import tempfile
 
 try:
-    from .common import RawFinding, ScanError, read_json, repo_directory, run_cli, run_command, tool_environment
+    from .common import RawFinding, ScanError, ScanCoverageError, read_json, repo_directory, run_cli, run_command, tool_environment
 except ImportError:
-    from common import RawFinding, ScanError, read_json, repo_directory, run_cli, run_command, tool_environment
+    from common import RawFinding, ScanError, ScanCoverageError, read_json, repo_directory, run_cli, run_command, tool_environment
 
 
 RULES = Path(__file__).with_name("rules") / "flask.yaml"
+PROFILES = {'broad', 'python'}
+PYTHON_SCOPE = ('Semgrep scope: Python source files (*.py and *.pyi) only. '
+                'HTML templates, JavaScript, configuration files, and other file types '
+                'are outside this Semgrep scope. AST and Gitleaks retain their existing scopes.')
 
 
 def error_summary(errors, repo):
@@ -76,11 +80,25 @@ def parse_output(output, repo):
     except (KeyError, TypeError, ValueError, AttributeError, OSError) as exc:
         raise ScanError("Malformed Semgrep finding or unreadable source.") from exc
     if report.get("errors"):
-        raise ScanError(error_summary(report["errors"], repo), findings=findings)
+        errors = report['errors']
+        def partial_parsing(error):
+            if not isinstance(error, dict):
+                return False
+            kind = error.get('type')
+            if isinstance(kind, list) and kind:
+                kind = kind[0]
+            return kind == 'PartialParsing'
+        # Only known parser coverage gaps get partial status. Runtime failures,
+        # malformed diagnostics, and mixed failures must still be failures.
+        error_class = (ScanCoverageError if isinstance(errors, list) and
+                       all(partial_parsing(error) for error in errors) else ScanError)
+        raise error_class(error_summary(errors, repo), findings=findings)
     return findings
 
 
-def scan(repo_path, timeout=180, configs=None):
+def scan(repo_path, timeout=180, configs=None, profile='broad'):
+    if not isinstance(profile, str) or profile not in PROFILES:
+        raise ScanError('Choose a supported Semgrep scope: broad or python.')
     repo = repo_directory(repo_path)
     selected_configs = configs if configs is not None else ["auto", str(RULES)]
     # Semgrep's auto resolver requires metrics; pinned local rules can disable them.
@@ -89,6 +107,8 @@ def scan(repo_path, timeout=180, configs=None):
                f"--metrics={metrics}", "--disable-version-check", "--jobs", "1"]
     for config in selected_configs:
         command.extend(["--config", str(config)])
+    if profile == 'python':
+        command.extend(['--include', '*.py', '--include', '*.pyi'])
     command.append(str(repo))
     with tempfile.TemporaryDirectory(prefix="vibeshield-semgrep-") as directory:
         env = tool_environment()
@@ -96,7 +116,16 @@ def scan(repo_path, timeout=180, configs=None):
                    SEMGREP_LOG_FILE=str(Path(directory) / "semgrep.log"),
                    SEMGREP_SEND_METRICS=metrics, SEMGREP_ENABLE_VERSION_CHECK="0")
         result = run_command(command, timeout, cwd=repo, env=env)
-    return parse_output(result.stdout, repo)
+    findings = parse_output(result.stdout, repo)
+    if profile == 'python':
+        report = read_json(result.stdout, 'Semgrep')
+        paths = report.get('paths')
+        scanned = paths.get('scanned') if isinstance(paths, dict) else None
+        if not isinstance(scanned, list) or not any(
+                isinstance(path, str) and Path(path).suffix in {'.py', '.pyi'} for path in scanned):
+            raise ScanError('Semgrep analyzed no Python files. Choose Broad scope for this project '
+                            'or review its ignore rules.', findings=findings)
+    return findings
 
 
 if __name__ == "__main__":

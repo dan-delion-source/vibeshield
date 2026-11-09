@@ -14,3 +14,10 @@
 @media(max-width:980px){.toolbox{display:block;padding:10px 0}.toolbox>div:last-child{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 18px}.tool-row{min-width:0}.toolbox-intro{margin-bottom:10px}}
 @media(max-width:760px){.sidebar{visibility:hidden;transition:none}.sidebar.is-open{visibility:visible}.target-tabs{flex-wrap:wrap;gap:15px}.target-tabs button{font-size:11px}.composer{min-width:0}.composer-layout{min-width:0}.page-heading{flex-wrap:wrap}.selected-target>div{min-width:0}.scan-picker{max-width:100%}.tool-row small{font-size:10px}.quiet-label{font-size:10px}}
 .table-scroll{position:relative}
+
+.target-input-row .browse-button{flex-shrink:0;white-space:nowrap}
+@media(max-width:760px){.target-input-row:has(.browse-button) input{flex:1 0 calc(100% - 37px)}.target-input-row>.browse-button{width:auto;flex:1}.target-input-row:has(.browse-button)>.primary{width:auto;flex:1}}
+
+.stage-partial .stage-marker{color:#8e5b18}
+
+.scan-scope{margin-top:18px}.scan-scope select{display:block;width:100%;max-width:420px;min-height:42px;padding:8px 10px;border:1px solid var(--line);border-radius:7px;background:var(--paper);color:var(--ink);font:inherit}.scope-note{flex-basis:100%;font-size:12px;color:var(--muted)}

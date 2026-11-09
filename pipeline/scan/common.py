@@ -30,6 +30,10 @@ class ScanError(Exception):
         self.findings = tuple(findings)
 
 
+class ScanCoverageError(ScanError):
+    """A scanner returned a valid report with known gaps in source coverage."""
+
+
 def run_command(command, timeout=180, cwd=None, env=None, accepted=(0,)):
     try:
         process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE,

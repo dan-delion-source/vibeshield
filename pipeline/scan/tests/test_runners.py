@@ -7,7 +7,7 @@ import tempfile
 import unittest
 from unittest.mock import patch
 
-from pipeline.scan.common import ScanError, local_url, run_command
+from pipeline.scan.common import ScanError, ScanCoverageError, local_url, run_command
 from pipeline.scan import nuclei_runner, secrets_runner, semgrep_runner, zap_runner
 
 
@@ -78,6 +78,44 @@ class RunnerTests(unittest.TestCase):
         item = secrets_runner.parse_output(json.dumps(raw))[0]
         self.assertNotIn('sensitive-value', str(item))
         self.assertEqual(item.source_snippet, '[REDACTED]')
+
+    def test_semgrep_partial_parsing_is_coverage_gap_with_or_without_findings(self):
+        for kind in ['PartialParsing', ['PartialParsing', []]]:
+            with self.assertRaises(ScanCoverageError):
+                semgrep_runner.parse_output(json.dumps({'results': [], 'errors': [{'type':kind}]}), Path('/tmp'))
+
+    def test_semgrep_mixed_or_unknown_diagnostics_remain_failures(self):
+        for errors in [[{'type':'PartialParsing'}, {'type':'Timeout'}],
+                       [{'type':'UnknownError'}], [None], {'malformed':True}]:
+            with self.assertRaises(ScanError) as result:
+                semgrep_runner.parse_output(json.dumps({'results': [], 'errors':errors}), Path('/tmp'))
+            self.assertNotIsInstance(result.exception, ScanCoverageError)
+
+    def test_python_scope_passes_include_filters_and_keeps_broad_rules(self):
+        payload = json.dumps({'results': [], 'errors': [], 'paths': {'scanned':['app.py']}})
+        with tempfile.TemporaryDirectory() as directory:
+            with patch.object(semgrep_runner, 'run_command', return_value=subprocess.CompletedProcess([], 0, payload, '')) as run:
+                self.assertEqual(semgrep_runner.scan(directory, profile='python'), [])
+                command = run.call_args.args[0]
+                self.assertIn('auto', command)
+                self.assertIn('*.py', command)
+                self.assertIn('*.pyi', command)
+            with patch.object(semgrep_runner, 'run_command', return_value=subprocess.CompletedProcess([], 0, payload, '')) as run:
+                semgrep_runner.scan(directory)
+                self.assertNotIn('--include', run.call_args.args[0])
+
+    def test_python_scope_does_not_treat_no_files_as_clean(self):
+        for paths in [{}, {'scanned':[]}, {'scanned':['template.html']}]:
+            payload = json.dumps({'results':[], 'paths':paths})
+            with tempfile.TemporaryDirectory() as directory, \
+                 patch.object(semgrep_runner, 'run_command', return_value=subprocess.CompletedProcess([], 0, payload, '')):
+                with self.assertRaisesRegex(ScanError, 'no Python files'):
+                    semgrep_runner.scan(directory, profile='python')
+
+    def test_unknown_semgrep_profile_is_rejected(self):
+        for profile in ['unknown', [], None]:
+            with self.assertRaises(ScanError):
+                semgrep_runner.scan('/tmp', profile=profile)
 
     def test_nuclei_jsonl(self):
         raw = {'matched-at': 'http://localhost:5000', 'template-id': 'headers',

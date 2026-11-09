@@ -1,5 +1,6 @@
 # Generated artifacts for this VibeShield project
 .venv/
+.tools/
 node_modules/
 __pycache__/
 *.pyc

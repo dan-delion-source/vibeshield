@@ -233,3 +233,28 @@ retained in CLI output, dashboard history, and reports. Coverage remains incompl
 and the CLI exits 2. Templates may contain syntax that Semgrep cannot fully parse;
 a parse diagnostic alone does not establish that the application template is invalid.
 No template exclusion is enabled automatically.
+
+### Choosing a Python-only Semgrep scope
+
+In the dashboard's **Local project** or **GitHub repository** form, select
+**Semgrep scope → Python source only — skip templates** when HTML templates and
+other file types are intentionally outside Semgrep's scope. The same default
+rules are used, with explicit `--include '*.py' --include '*.pyi'` target filters.
+AST and Gitleaks coverage is unchanged. Broad remains the default.
+
+The selected profile and scope limits are persisted with each scan, shown on the
+Findings page, and included in both PDF and JSON exports. A completed result
+applies to this selected scope, not to the whole repository. Python parser errors,
+timeouts, missing tools, and other failures still cause incomplete coverage.
+Analyzing no Python files is an error, not an empty successful scan. The Python
+API also accepts `semgrep_runner.scan(path, profile='python')`; standalone CLI
+commands retain their existing broad scope.
+
+Reports containing only `PartialParsing` diagnostics mark the Semgrep dashboard
+stage **Incomplete**, with its candidate count preserved. This means Semgrep
+returned a valid report but could not parse every source region; it is different
+from a missing executable or scanner failure. Mixed or unknown diagnostics still
+mark the stage Failed. Broad scanning remains enabled and templates are not
+excluded or rewritten. The overall assessment remains incomplete, including JSON
+and PDF exports, and the CLI still exits 2. Restart the dashboard and run a new
+scan to see the updated stage labels; existing records are preserved.

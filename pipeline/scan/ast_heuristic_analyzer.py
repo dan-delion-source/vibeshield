@@ -42,7 +42,7 @@ ROUTES = {"route", "get", "post", "put", "patch", "delete", "head", "options"}
 LOOKUPS = {"execute", "executemany", "query", "get", "get_or_404", "filter", "filter_by"}
 IDENTITIES = {"current_user", "user_id", "authenticated_user", "authenticated_user_id", "auth_user", "uid"}
 OWNERS = {"owner", "owner_id", "user_id", "created_by", "author_id"}
-SKIP_DIRS = {".git", ".venv", "venv", "node_modules", "__pycache__"}
+SKIP_DIRS = {".git", ".venv", ".tools", "venv", "node_modules", "__pycache__"}
 
 
 def walk_local(node):
